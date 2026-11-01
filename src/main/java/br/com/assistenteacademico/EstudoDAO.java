@@ -90,22 +90,6 @@ public class EstudoDAO {
         }
     }
 
-    public boolean alterarStatus(int idEstudo, int idUsuario, String status) {
-        String sql = "UPDATE e SET status = ? FROM Estudo e " +
-                "INNER JOIN Disciplina d ON d.id_disciplina = e.id_disciplina " +
-                "WHERE e.id_estudo = ? AND d.id_usuario = ?";
-        try (Connection conexao = Conexao.conectar();
-             PreparedStatement comando = conexao.prepareStatement(sql)) {
-            comando.setString(1, status);
-            comando.setInt(2, idEstudo);
-            comando.setInt(3, idUsuario);
-            return comando.executeUpdate() == 1;
-        } catch (SQLException e) {
-            System.out.println("Erro ao alterar status do estudo: " + e.getMessage());
-            return false;
-        }
-    }
-
     public boolean excluirEstudo(int idEstudo, int idUsuario) {
         String sql = "DELETE e FROM Estudo e INNER JOIN Disciplina d ON d.id_disciplina = e.id_disciplina " +
                 "WHERE e.id_estudo = ? AND d.id_usuario = ?";

@@ -96,38 +96,14 @@ public class AtividadeDAO {
         }
     }
 
-    public boolean alterarStatus(int idAtividade, int idUsuario, String status) {
-        String sql = "UPDATE a SET status = ? FROM Atividade a " +
-                "INNER JOIN Disciplina d ON d.id_disciplina = a.id_disciplina " +
-                "WHERE a.id_atividade = ? AND d.id_usuario = ?";
-        try (Connection conexao = Conexao.conectar();
-             PreparedStatement comando = conexao.prepareStatement(sql)) {
-            comando.setString(1, status);
-            comando.setInt(2, idAtividade);
-            comando.setInt(3, idUsuario);
-            return comando.executeUpdate() == 1;
-        } catch (SQLException e) {
-            System.out.println("Erro ao alterar status da atividade: " + e.getMessage());
-            return false;
-        }
-    }
-
     public boolean excluirAtividade(int idAtividade, int idUsuario) {
-        String sqlRemoverLembretes = "DELETE l FROM Lembrete l " +
-                "INNER JOIN Atividade a ON a.id_atividade = l.id_item " +
-                "INNER JOIN Disciplina d ON d.id_disciplina = a.id_disciplina " +
-                "WHERE l.tipo_item = 'ATIVIDADE' AND a.id_atividade = ? AND d.id_usuario = ?";
         String sqlRemoverAtividade = "DELETE a FROM Atividade a " +
                 "INNER JOIN Disciplina d ON d.id_disciplina = a.id_disciplina " +
                 "WHERE a.id_atividade = ? AND d.id_usuario = ?";
 
         try (Connection conexao = Conexao.conectar()) {
             conexao.setAutoCommit(false);
-            try (PreparedStatement removerLembretes = conexao.prepareStatement(sqlRemoverLembretes);
-                 PreparedStatement removerAtividade = conexao.prepareStatement(sqlRemoverAtividade)) {
-                removerLembretes.setInt(1, idAtividade);
-                removerLembretes.setInt(2, idUsuario);
-                removerLembretes.executeUpdate();
+            try (PreparedStatement removerAtividade = conexao.prepareStatement(sqlRemoverAtividade)) {
                 removerAtividade.setInt(1, idAtividade);
                 removerAtividade.setInt(2, idUsuario);
                 boolean excluida = removerAtividade.executeUpdate() == 1;

@@ -23,13 +23,6 @@
             <version>13.4.0.jre11</version>
         </dependency>
 
-        <dependency>
-            <groupId>com.microsoft.sqlserver</groupId>
-            <artifactId>mssql-jdbc_auth</artifactId>
-            <version>13.4.0.x64</version>
-            <type>dll</type>
-        </dependency>
-
     </dependencies>
 
 </project>

@@ -57,10 +57,6 @@ public class DisciplinaDAO {
         return disciplinas;
     }
 
-    public List<Object[]> listarDisciplinasPorUsuario(int idUsuario) {
-        return buscarDisciplinasPorUsuario(idUsuario);
-    }
-
     public boolean editarDisciplina(int idDisciplina, int idUsuario, String nome,
                                     String professor, String curso, String semestre,
                                     String horario, String sala, String observacao) {

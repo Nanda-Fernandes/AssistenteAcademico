@@ -9,6 +9,22 @@ import java.util.List;
 
 public class DashboardDAO {
 
+    public String[] buscarPerfil(int idUsuario) {
+        String sql = "SELECT nome, curso FROM Usuario WHERE id_usuario = ?";
+        try (Connection conexao = Conexao.conectar();
+             PreparedStatement comando = conexao.prepareStatement(sql)) {
+            comando.setInt(1, idUsuario);
+            try (ResultSet resultado = comando.executeQuery()) {
+                if (resultado.next()) {
+                    return new String[]{resultado.getString("nome"), resultado.getString("curso")};
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("Erro ao buscar perfil do usuário: " + e.getMessage());
+        }
+        return new String[]{"", ""};
+    }
+
     public int contarDisciplinas(int idUsuario) {
 
         String sql = "SELECT COUNT(*) " +
@@ -102,6 +118,57 @@ public class DashboardDAO {
         }
 
         return 0;
+    }
+
+    public int[] contarPrioridades(int idUsuario) {
+
+        int[] totais = new int[5];
+        String sql =
+                "WITH compromissos AS (" +
+                        "SELECT a.data_entrega AS data_item " +
+                        "FROM Atividade a " +
+                        "INNER JOIN Disciplina d ON a.id_disciplina = d.id_disciplina " +
+                        "WHERE d.id_usuario = ? AND a.status <> 'Concluído' " +
+                        "UNION ALL " +
+                        "SELECT e.data_estudo AS data_item " +
+                        "FROM Estudo e " +
+                        "INNER JOIN Disciplina d ON e.id_disciplina = d.id_disciplina " +
+                        "WHERE d.id_usuario = ? AND e.status <> 'Concluído' " +
+                        "UNION ALL " +
+                        "SELECT p.data_prova AS data_item " +
+                        "FROM Prova p " +
+                        "INNER JOIN Disciplina d ON p.id_disciplina = d.id_disciplina " +
+                        "WHERE d.id_usuario = ?" +
+                        ") " +
+                        "SELECT " +
+                        "COALESCE(SUM(CASE WHEN data_item < CAST(GETDATE() AS DATE) THEN 1 ELSE 0 END), 0), " +
+                        "COALESCE(SUM(CASE WHEN data_item = CAST(GETDATE() AS DATE) THEN 1 ELSE 0 END), 0), " +
+                        "COALESCE(SUM(CASE WHEN data_item > CAST(GETDATE() AS DATE) " +
+                        "AND data_item <= DATEADD(DAY, 3, CAST(GETDATE() AS DATE)) THEN 1 ELSE 0 END), 0), " +
+                        "COALESCE(SUM(CASE WHEN data_item > DATEADD(DAY, 3, CAST(GETDATE() AS DATE)) " +
+                        "AND data_item <= DATEADD(DAY, 7, CAST(GETDATE() AS DATE)) THEN 1 ELSE 0 END), 0), " +
+                        "COALESCE(SUM(CASE WHEN data_item > DATEADD(DAY, 7, CAST(GETDATE() AS DATE)) THEN 1 ELSE 0 END), 0) " +
+                        "FROM compromissos";
+
+        try (Connection conexao = Conexao.conectar();
+             PreparedStatement comando = conexao.prepareStatement(sql)) {
+
+            comando.setInt(1, idUsuario);
+            comando.setInt(2, idUsuario);
+            comando.setInt(3, idUsuario);
+
+            try (ResultSet resultado = comando.executeQuery()) {
+                if (resultado.next()) {
+                    for (int i = 0; i < totais.length; i++) {
+                        totais[i] = resultado.getInt(i + 1);
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("Erro ao contar prioridades: " + e.getMessage());
+        }
+
+        return totais;
     }
 
 
@@ -213,28 +280,4 @@ public class DashboardDAO {
         return provas;
     }
 
-    public List<Object[]> buscarLembretesPendentes(int idUsuario) {
-        List<Object[]> lembretes = new ArrayList<>();
-        String sql = "SELECT TOP 5 l.tipo_item, l.id_item, l.data_lembrete, l.status " +
-                "FROM Lembrete l WHERE l.id_usuario = ? AND l.status <> 'Concluído' " +
-                "ORDER BY l.data_lembrete ASC";
-
-        try (Connection conexao = Conexao.conectar();
-             PreparedStatement comando = conexao.prepareStatement(sql)) {
-            comando.setInt(1, idUsuario);
-            try (ResultSet resultado = comando.executeQuery()) {
-                while (resultado.next()) {
-                    lembretes.add(new Object[]{
-                            resultado.getString("tipo_item"),
-                            resultado.getInt("id_item"),
-                            resultado.getTimestamp("data_lembrete"),
-                            resultado.getString("status")
-                    });
-                }
-            }
-        } catch (SQLException e) {
-            System.out.println("Erro ao buscar lembretes pendentes: " + e.getMessage());
-        }
-        return lembretes;
-    }
 }
